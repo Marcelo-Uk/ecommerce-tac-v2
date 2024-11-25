@@ -1,4 +1,4 @@
-# Meu E-commerce Django
+##E-commerce Django
 
 Este é um projeto Django para um e-commerce simples.
 
