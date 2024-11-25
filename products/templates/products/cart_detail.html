@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Carrinho</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Modal de Notificações -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="messageModalLabel">Notificação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="modalMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pagamento -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Pagamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Total da Compra:</strong> R$ <span id="totalAmount"></span></p>
+                    <p>Como gostaria de pagar?</p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" onclick="finalizePurchase('Pix')">Pix</button>
+                        <button class="btn btn-primary" onclick="finalizePurchase('Crédito')">Crédito</button>
+                        <button class="btn btn-secondary" onclick="finalizePurchase('Débito')">Débito</button>
+                        <button class="btn btn-warning" onclick="finalizePurchase('Boleto')">Boleto</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Compra Concluída -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Compra Concluída</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Sua compra foi concluída com sucesso!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Header -->
+    <header style="position: fixed; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 10px; background-color: #547565; border-bottom: 2px solid #ccc; z-index: 1000;">
+        <!-- Título Centralizado -->
+        <div style="text-align: center; flex: 1;">
+            <h1 style="margin: 0; font-size: 38px; color: white; font-weight: bold;">O Monolito</h1>
+            <p style="margin: 0; font-size: 12px; color: white; font-style: italic;">um e-commerce digital desenvolvido pelos "Guris"</p>
+        </div>
+
+        <!-- Botões no Header -->
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- Botão Ver Carrinho -->
+            <a href="{% url 'cart_detail' %}" class="btn btn-info" style="color: white; font-size: 16px;">
+                Ver Carrinho
+            </a>
+
+            <!-- Botão de Logout -->
+            <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" style="background-color: #d9534f; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                    Sair
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    {% block content %}
+    <main style="margin-top: 80px; padding: 20px;">
+        <div class="container mt-5">
+            <h1 class="text-center mb-4">Meu Carrinho</h1>
+        
+            <!-- Tabela de Itens do Carrinho -->
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Produto</th>
+                            <th>Preço Unitário</th>
+                            <th>Quantidade</th>
+                            <th>Total</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product_id, item in cart.items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>R$ {{ item.price }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>R$ {{ item.price|floatformat:2|floatformat:2 }}</td>
+                            <td>
+                                <a href="{% url 'remove_from_cart' product_id %}" class="btn btn-danger btn-sm">Remover</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        
+            <!-- Ações -->
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <!-- Botão Continuar Comprando -->
+                <a href="{% url 'product_list' %}" class="btn btn-secondary btn-lg">Continuar Comprando</a>
+            
+                <!-- Botão Fechar Compra -->
+                <button class="btn btn-success btn-lg" onclick="openPaymentModal()" 
+                        {% if not cart %} disabled {% endif %}>
+                    Fechar Compra
+                </button>
+</div>
+
+        </div>
+    </main>
+    {% endblock %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Abrir Modal de Pagamento
+        function openPaymentModal() {
+            const totalAmount = calculateTotal();
+            document.getElementById('totalAmount').innerText = totalAmount.toFixed(2);
+            const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            paymentModal.show();
+        }
+
+        // Simular Total da Compra (substituir com lógica real no backend se necessário)
+        function calculateTotal() {
+            let total = 0;
+            {% for product_id, item in cart.items %}
+            total += {{ item.price }} * {{ item.quantity }};
+            {% endfor %}
+            return total;
+        }
+
+        // Finalizar Compra
+        function finalizePurchase(method) {
+            // Fechar o Modal de Pagamento
+            const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+            paymentModal.hide();
+
+            // Exibir Modal de Compra Concluída
+            const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+            confirmationModal.show();
+
+            // Limpar o Carrinho (enviar para o backend se necessário)
+            // Aqui você pode adicionar lógica para enviar uma requisição para finalizar a compra no backend.
+            console.log(`Compra finalizada com ${method}`);
+        }
+
+        // Finalizar Compra
+// Finalizar Compra
+        function finalizePurchase(method) {
+            // Fechar o Modal de Pagamento
+            const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+            paymentModal.hide();
+        
+            // Enviar solicitação POST ao backend para finalizar a compra
+            fetch("{% url 'finalize_purchase_backend' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}" // Inclua o token CSRF para segurança
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Exibir Modal de Compra Concluída
+                    const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+                    confirmationModal.show();
+                
+                    // Adicionar evento para atualizar a página ao fechar o modal
+                    document.getElementById('confirmationModal').addEventListener('hidden.bs.modal', function () {
+                        location.reload(); // Recarregar a página
+                    });
+                } else {
+                    console.error("Erro ao finalizar compra");
+                }
+            })
+            .catch(error => console.error("Erro na solicitação:", error));
+        }
+
+    </script>
+</body>
+</html>

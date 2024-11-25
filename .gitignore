@@ -1,0 +1,18 @@
+# Ambiente Virtual
+venv/
+*.pyc
+__pycache__/
+
+# Arquivos de Configuração Sensíveis
+.env
+
+# Migrations
+*.sqlite3
+db.sqlite3
+
+# Outros
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.bak
